@@ -1,7 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Certificate as CertificateFacade, CertificateUtils } from '@energyweb/issuer';
+import {
+    Certificate as CertificateFacade,
+    CertificateUtils,
+    PreciseProofUtils
+} from '@energyweb/issuer';
 import { BigNumber } from 'ethers';
 import { ISuccessResponse } from '@energyweb/origin-backend-core';
 import { BadRequestException } from '@nestjs/common';
@@ -29,8 +33,12 @@ export class TransferCertificateHandler implements ICommandHandler<TransferCerti
         ).sync();
 
         if (certificate.issuedPrivately) {
-            const senderBalance = BigNumber.from(certificate.privateOwners[from] ?? 0);
-            const receiverBalance = BigNumber.from(certificate.privateOwners[to] ?? 0);
+            const senderBalance = BigNumber.from(
+                certificate.latestCommitment.commitment[from] ?? 0
+            );
+            const receiverBalance = BigNumber.from(
+                certificate.latestCommitment.commitment[to] ?? 0
+            );
             const amountToTransfer = BigNumber.from(amount);
 
             if (amountToTransfer > senderBalance) {
@@ -43,12 +51,14 @@ export class TransferCertificateHandler implements ICommandHandler<TransferCerti
             const newSenderBalance = senderBalance.sub(amountToTransfer);
             const newReceiverBalance = receiverBalance.add(amountToTransfer);
 
+            const newCommitment = {
+                ...certificate.latestCommitment.commitment,
+                [from]: newSenderBalance.toString(),
+                [to]: newReceiverBalance.toString()
+            };
+
             await this.repository.update(certificateId, {
-                privateOwners: {
-                    ...certificate.privateOwners,
-                    [from]: newSenderBalance.toString(),
-                    [to]: newReceiverBalance.toString()
-                }
+                latestCommitment: PreciseProofUtils.generateProofs(newCommitment)
             });
         } else {
             try {

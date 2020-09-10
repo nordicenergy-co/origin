@@ -235,9 +235,9 @@ describe('Certification Request tests', () => {
             .get(`/certificate/token-id/${newCertificateTokenId}`)
             .expect(200)
             .expect((res) => {
-                const { owners, privateOwners } = res.body;
+                const { owners, latestCommitment } = res.body;
 
-                expect(privateOwners[deviceManager.address]).to.equal(
+                expect(latestCommitment.commitment[deviceManager.address]).to.equal(
                     certificationRequestTestData.energy
                 );
                 expect(owners[deviceManager.address]).to.equal(undefined);

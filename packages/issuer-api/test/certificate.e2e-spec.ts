@@ -156,9 +156,11 @@ describe('Certificate tests', () => {
             })
             .expect(201)
             .expect((res) => {
-                const { privateOwners } = res.body;
+                const { latestCommitment } = res.body;
 
-                expect(privateOwners[deviceManager.address]).to.equal(certificateTestData.energy);
+                expect(latestCommitment.commitment[deviceManager.address]).to.equal(
+                    certificateTestData.energy
+                );
             });
     });
 
@@ -174,10 +176,12 @@ describe('Certificate tests', () => {
             .expect(201)
             .expect((res) => {
                 certificateId = res.body.id;
-                const { privateOwners } = res.body;
+                const { latestCommitment } = res.body;
 
-                expect(privateOwners[deviceManager.address]).to.equal(certificateTestData.energy);
-                expect(privateOwners[registryDeployer.address]).to.equal(undefined);
+                expect(latestCommitment.commitment[deviceManager.address]).to.equal(
+                    certificateTestData.energy
+                );
+                expect(latestCommitment.commitment[registryDeployer.address]).to.equal(undefined);
             });
 
         await request(app.getHttpServer())
@@ -195,10 +199,10 @@ describe('Certificate tests', () => {
             .get(`/certificate/${certificateId}`)
             .expect(200)
             .expect((getResponse) => {
-                const { privateOwners } = getResponse.body;
+                const { latestCommitment } = getResponse.body;
 
-                expect(privateOwners[deviceManager.address]).to.equal('0');
-                expect(privateOwners[registryDeployer.address]).to.equal(
+                expect(latestCommitment.commitment[deviceManager.address]).to.equal('0');
+                expect(latestCommitment.commitment[registryDeployer.address]).to.equal(
                     certificateTestData.energy
                 );
             });
@@ -220,7 +224,7 @@ describe('Certificate tests', () => {
             .post('/certificate')
             .send({
                 ...certificateTestData,
-                isPrivate: false
+                isPrivate: true
             })
             .expect(201)
             .expect((res) => {
@@ -239,9 +243,9 @@ describe('Certificate tests', () => {
             .get(`/certificate/${certificateId}`)
             .expect(200)
             .expect((getResponse) => {
-                const { claimers, claims, privateOwners } = getResponse.body;
+                const { claimers, claims, latestCommitment } = getResponse.body;
 
-                expect(privateOwners[deviceManager.address]).to.equal('0');
+                expect(latestCommitment.commitment[deviceManager.address]).to.equal('0');
                 expect(claimers[deviceManager.address]).to.equal(value);
                 expect(
                     claims.some(

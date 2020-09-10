@@ -2,9 +2,10 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Certificate as CertificateFacade, CertificateUtils } from '@energyweb/issuer';
-import { BigNumber } from 'ethers';
+import { BigNumber, Event as BlockchainEvent } from 'ethers';
 import { ISuccessResponse } from '@energyweb/origin-backend-core';
 import { BadRequestException } from '@nestjs/common';
+import { PreciseProofs } from 'precise-proofs-js';
 import { ClaimCertificateCommand } from '../commands/claim-certificate.command';
 import { Certificate } from '../certificate.entity';
 
@@ -28,27 +29,65 @@ export class ClaimCertificateHandler implements ICommandHandler<ClaimCertificate
             certificate.blockchain.wrap()
         ).sync();
 
-        if (certificate.issuedPrivately) {
-            const claimerPrivateBalance = BigNumber.from(
-                certificate.privateOwners[forAddress] ?? 0
-            );
-            const amountToClaim = BigNumber.from(amount);
+        const claimerBalance = BigNumber.from(
+            (certificate.issuedPrivately
+                ? certificate.latestCommitment.commitment
+                : certificate.owners)[forAddress] ?? 0
+        );
 
-            if (amountToClaim > claimerPrivateBalance) {
-                throw new BadRequestException({
-                    success: false,
-                    message: `Claimer ${forAddress} has a private balance of ${claimerPrivateBalance.toString()} but wants to claim ${amount}.`
-                });
-            }
+        const amountToClaim = amount ? BigNumber.from(amount) : claimerBalance;
+
+        if (amountToClaim > claimerBalance) {
+            throw new BadRequestException({
+                success: false,
+                message: `Claimer ${forAddress} has a balance of ${claimerBalance.toString()} but wants to claim ${amount}.`
+            });
+        }
+
+        // Transfer private certificates to public
+        if (certificate.issuedPrivately) {
+            const { activeUser, issuer } = certificate.blockchain.wrap();
+            const issuerWithSigner = issuer.connect(activeUser);
+
+            const ownerAddressLeafHash = certificate.latestCommitment.leafs.find(
+                (leaf) => leaf.key === forAddress
+            ).hash;
+
+            const requestTx = await issuerWithSigner.requestMigrateToPublicFor(
+                certificate.tokenId,
+                ownerAddressLeafHash,
+                forAddress
+            );
+            const { events } = await requestTx.wait();
+
+            const getIdFromEvents = (logs: BlockchainEvent[]): number =>
+                Number(logs.find((log) => log.event === 'MigrateToPublicRequested').topics[2]);
+
+            const requestId = getIdFromEvents(events);
+
+            const theProof = PreciseProofs.createProof(
+                forAddress,
+                certificate.latestCommitment.leafs,
+                false
+            );
+            const onChainProof = theProof.proofPath.map((p) => ({
+                left: !!p.left,
+                hash: p.left || p.right
+            }));
+
+            const { salt } = theProof;
+
+            const migrateTx = await issuerWithSigner.migrateToPublic(
+                requestId.toString(),
+                amountToClaim.toString(),
+                salt,
+                onChainProof
+            );
+            await migrateTx.wait();
         }
 
         try {
-            await cert.claim(
-                claimData,
-                BigNumber.from(amount ?? certificate.owners[forAddress]),
-                forAddress,
-                forAddress
-            );
+            await cert.claim(claimData, BigNumber.from(amountToClaim), forAddress, forAddress);
         } catch (error) {
             return {
                 success: false,

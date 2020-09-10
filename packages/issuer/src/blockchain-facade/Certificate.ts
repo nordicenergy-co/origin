@@ -2,10 +2,15 @@ import { Event as BlockchainEvent, ContractTransaction, ethers, BigNumber } from
 
 import { Timestamp } from '@energyweb/utils-general';
 
+import {
+    IOwnershipCommitment,
+    IOwnershipCommitmentProofWithTx
+} from '@energyweb/origin-backend-core';
 import { getEventsFromContract } from '../utils/events';
 import { encodeClaimData, decodeClaimData } from './CertificateUtils';
 import { IBlockchainProperties } from './BlockchainProperties';
 import { MAX_ENERGY_PER_CERTIFICATE } from './CertificationRequest';
+import { PreciseProofUtils } from '../utils/PreciseProofUtils';
 
 export interface ICertificateEnergy {
     publicVolume: BigNumber;
@@ -102,6 +107,56 @@ export class Certificate implements ICertificate {
         newCertificate.id = getIdFromEvents(events);
 
         return newCertificate.sync();
+    }
+
+    public static async createPrivate(
+        to: string,
+        value: BigNumber,
+        fromTime: Timestamp,
+        toTime: Timestamp,
+        deviceId: string,
+        blockchainProperties: IBlockchainProperties
+    ): Promise<{ certificate: Certificate; proof: IOwnershipCommitmentProofWithTx }> {
+        if (value.gt(MAX_ENERGY_PER_CERTIFICATE)) {
+            throw new Error(
+                `Too much energy requested. Requested: ${value}, Max: ${MAX_ENERGY_PER_CERTIFICATE}`
+            );
+        }
+
+        const newCertificate = new Certificate(null, blockchainProperties);
+
+        const getIdFromEvents = (logs: BlockchainEvent[]): number =>
+            Number(logs.find((log) => log.event === 'CertificationRequestApproved').topics[2]);
+
+        const { issuer } = blockchainProperties;
+        const issuerWithSigner = issuer.connect(blockchainProperties.activeUser);
+
+        const data = await issuer.encodeData(fromTime, toTime, deviceId);
+
+        const properChecksumToAddress = ethers.utils.getAddress(to);
+
+        const ownershipCommitment: IOwnershipCommitment = {
+            [properChecksumToAddress]: value.toString()
+        };
+
+        const commitmentProof = PreciseProofUtils.generateProofs(ownershipCommitment);
+
+        const tx = await issuerWithSigner.issuePrivate(
+            properChecksumToAddress,
+            commitmentProof.rootHash,
+            data
+        );
+        const { events } = await tx.wait();
+
+        newCertificate.id = getIdFromEvents(events);
+
+        return {
+            certificate: await newCertificate.sync(),
+            proof: {
+                ...commitmentProof,
+                txHash: tx.hash
+            }
+        };
     }
 
     async sync(): Promise<Certificate> {

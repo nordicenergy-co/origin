@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Certificate as CertificateFacade, CertificateUtils } from '@energyweb/issuer';
 import { BigNumber } from 'ethers';
+import { IOwnershipCommitmentProofWithTx } from '@energyweb/origin-backend-core';
 import { IssueCertificateCommand } from '../commands/issue-certificate.command';
 import { Certificate } from '../certificate.entity';
 import { BlockchainPropertiesService } from '../../blockchain/blockchain-properties.service';
@@ -20,14 +21,28 @@ export class IssueCertificateHandler implements ICommandHandler<IssueCertificate
 
         const blockchainProperties = await this.blockchainPropertiesService.get();
 
-        const cert = await CertificateFacade.create(
-            to,
-            BigNumber.from(isPrivate ? 0 : energy),
-            fromTime,
-            toTime,
-            deviceId,
-            blockchainProperties.wrap()
-        );
+        let cert: CertificateFacade;
+        let commitment: IOwnershipCommitmentProofWithTx;
+
+        if (!isPrivate) {
+            cert = await CertificateFacade.create(
+                to,
+                BigNumber.from(energy),
+                fromTime,
+                toTime,
+                deviceId,
+                blockchainProperties.wrap()
+            );
+        } else {
+            ({ certificate: cert, proof: commitment } = await CertificateFacade.createPrivate(
+                to,
+                BigNumber.from(energy),
+                fromTime,
+                toTime,
+                deviceId,
+                blockchainProperties.wrap()
+            ));
+        }
 
         const certificateOwners = await CertificateUtils.calculateOwnership(
             cert.id,
@@ -43,8 +58,8 @@ export class IssueCertificateHandler implements ICommandHandler<IssueCertificate
             creationTime: cert.creationTime,
             creationBlockHash: cert.creationBlockHash,
             owners: certificateOwners,
-            privateOwners: isPrivate ? { [to]: energy } : {},
-            issuedPrivately: isPrivate ?? false
+            issuedPrivately: isPrivate ?? false,
+            latestCommitment: isPrivate ? commitment : null
         });
 
         return this.repository.save(certificate);

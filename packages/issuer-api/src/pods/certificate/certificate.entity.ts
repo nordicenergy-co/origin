@@ -2,6 +2,7 @@ import { ExtendedBaseEntity } from '@energyweb/origin-backend';
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, Unique } from 'typeorm';
 import { IsBoolean, IsInt } from 'class-validator';
 import { CertificateUtils, IClaim } from '@energyweb/issuer';
+import { IOwnershipCommitmentProof } from '@energyweb/origin-backend-core';
 import { BlockchainProperties } from '../blockchain/blockchain-properties.entity';
 
 export interface ICertificate {
@@ -47,14 +48,16 @@ export class Certificate extends ExtendedBaseEntity implements ICertificate {
     @Column('simple-json')
     owners: CertificateUtils.IShareInCertificate;
 
-    @Column('simple-json')
-    privateOwners: CertificateUtils.IShareInCertificate;
-
     @Column('simple-json', { nullable: true })
     claimers: CertificateUtils.IShareInCertificate;
 
     @Column('simple-json', { nullable: true })
     claims: IClaim[];
+
+    /* PRIVATE CERTIFICATES ONLY */
+
+    @Column('simple-json', { nullable: true })
+    latestCommitment: IOwnershipCommitmentProof;
 
     @Column()
     @IsBoolean()

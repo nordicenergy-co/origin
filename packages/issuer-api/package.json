@@ -60,6 +60,7 @@
         "moment": "2.24.0",
         "moment-range": "4.0.2",
         "pg": "^8.0.0",
+        "precise-proofs-js": "^1.2.0",
         "reflect-metadata": "0.1.13",
         "rxjs": "6.6.2",
         "swagger-ui-express": "4.1.4",
