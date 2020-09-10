@@ -4,7 +4,6 @@ import {
     DeviceStatus,
     DeviceStatusChangedEvent,
     DeviceUpdateData,
-    ICertificationRequestBackend,
     IDevice,
     IDeviceProductInfo,
     IDeviceWithRelationsIds,
@@ -28,7 +27,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
 import { BigNumber } from 'ethers';
-import moment from 'moment';
 import { FindOneOptions, Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import { SM_READS_ADAPTER } from '../../const';
@@ -285,48 +283,10 @@ export class DeviceService {
 
     private async getMeterStats(deviceId: string): Promise<ISmartMeterReadStats> {
         const smReads = await this.getAllSmartMeterReadings(deviceId);
-        const certificationRequests = await this.getCertificationRequests(deviceId);
 
-        return this.calculateCertifiedEnergy(this.resolveCertified(smReads, certificationRequests));
-    }
-
-    private async getCertificationRequests(
-        deviceId: string
-    ): Promise<ICertificationRequestBackend[]> {
-        const device = await this.repository.findOne(deviceId, {
-            relations: ['certificationRequests']
-        });
-
-        return device.certificationRequests;
-    }
-
-    private resolveCertified(
-        smReads: ISmartMeterRead[],
-        certificationRequests: ICertificationRequestBackend[]
-    ): ISmartMeterReadWithStatus[] {
-        return smReads.map((smRead) => {
-            let certified = false;
-
-            for (const certReq of certificationRequests) {
-                if (!certReq.approved) {
-                    continue;
-                }
-
-                const smReadTime = moment.unix(smRead.timestamp);
-                const certificationFromTime = moment.unix(certReq.fromTime);
-                const certificationToTime = moment.unix(certReq.toTime);
-
-                if (smReadTime.isBetween(certificationFromTime, certificationToTime)) {
-                    certified = true;
-                    break;
-                }
-            }
-
-            return {
-                ...smRead,
-                certified
-            };
-        });
+        return this.calculateCertifiedEnergy(
+            smReads.map((smRead) => ({ ...smRead, certified: false }))
+        );
     }
 
     private calculateCertifiedEnergy(smReads: ISmartMeterReadWithStatus[]): ISmartMeterReadStats {

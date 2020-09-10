@@ -390,7 +390,7 @@ contract Issuer is Initializable, Ownable {
 			approved: false
 		});
 
-		emit MigrateToPublicRequested(_forAddress, id, _ownerAddressLeafHash);
+		emit MigrateToPublicRequested(_forAddress, id);
 
         return id;
 	}

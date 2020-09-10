@@ -1,5 +1,4 @@
 enum EmailTypes {
-    CERTS_APPROVED = 'Certificate(s) approved',
     FOUND_MATCHING_SUPPLY = 'Certificate(s) matching your demand',
     DEVICE_STATUS_CHANGED = 'Device Status Change',
     ORGANIZATION_STATUS_CHANGED = 'Update on the registration process',
