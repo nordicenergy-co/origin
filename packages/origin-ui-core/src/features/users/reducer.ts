@@ -10,6 +10,7 @@ export interface IUsersState {
     activeBlockchainAccountAddress: string;
     userOffchain: IUser;
     organizations: IOrganizationWithRelationsIds[];
+    irecAccount: any;
     invitations: {
         invitations: IOrganizationInvitation[];
         showPendingInvitationsModal: boolean;
@@ -20,6 +21,7 @@ const defaultState: IUsersState = {
     activeBlockchainAccountAddress: null,
     userOffchain: null,
     organizations: [],
+    irecAccount: null,
     invitations: {
         showPendingInvitationsModal: false,
         invitations: []
@@ -62,14 +64,8 @@ export default function reducer(state = defaultState, action: IUsersAction): IUs
                 }
             };
 
-        case UsersActions.setShowPendingInvitations:
-            return {
-                ...state,
-                invitations: {
-                    ...state.invitations,
-                    showPendingInvitationsModal: action.payload as boolean
-                }
-            };
+        case UsersActions.setUserState:
+            return action.payload;
         default:
             return state;
     }

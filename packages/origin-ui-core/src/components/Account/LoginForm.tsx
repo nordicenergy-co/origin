@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Paper, Button, Theme, makeStyles, Box } from '@material-ui/core';
 import { Formik, FormikHelpers, Form, Field } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import { IUserClient } from '@energyweb/origin-backend-core';
 import { getOffChainDataSource, showNotification, NotificationType, useTranslation } from '../..';
 import { setLoading } from '../../features/general';
-import { getUserOffchain } from '../../features/users/selectors';
 import { useHistory } from 'react-router-dom';
 import { setAuthenticationToken } from '../../features/users/actions';
 import { useLinks, useValidation } from '../../utils';
@@ -22,17 +21,11 @@ const INITIAL_VALUES: IFormValues = {
     password: ''
 };
 
-interface IOwnProps {
-    redirect?: string;
-}
-
-export const LoginForm = (props: IOwnProps) => {
+export const LoginForm = () => {
     const dispatch = useDispatch();
     const userClient: IUserClient = useSelector(getOffChainDataSource)?.userClient;
-    const user = useSelector(getUserOffchain);
     const history = useHistory();
     const { t } = useTranslation();
-    const { getCertificatesLink } = useLinks();
     const { Yup } = useValidation();
     const { getAccountLink } = useLinks();
 
@@ -65,7 +58,6 @@ export const LoginForm = (props: IOwnProps) => {
 
         try {
             const loginResponse = await userClient.login(values.email, values.password);
-
             dispatch(setAuthenticationToken(loginResponse.accessToken));
         } catch (error) {
             console.warn('Could not log in.', error);
@@ -80,12 +72,6 @@ export const LoginForm = (props: IOwnProps) => {
         email: Yup.string().email().label(t('user.properties.email')).required(),
         password: Yup.string().label(t('user.properties.password')).required()
     });
-
-    useEffect(() => {
-        if (user) {
-            history.push(props.redirect || getCertificatesLink());
-        }
-    }, [user]);
 
     return (
         <Paper elevation={1} className="LoginForm" classes={{ root: styles.form }}>

@@ -218,7 +218,8 @@
                 "import": "Import",
                 "login": "Login",
                 "registerUser": "Register user",
-                "userProfile": "User profile"
+                "userProfile": "User profile",
+                "connectIREC": "Connect I-REC"
             }
             
         },
@@ -397,7 +398,9 @@
                 "errorUpdateChainAddress": "Error to update User blockchain address."
             },
             "dialog": {
-                "dontHaveAccAsk": "Don't have an account?"
+                "dontHaveAccAsk": "Don't have an account?",
+                "userRegisteredModalTitle": "Thanks for registering a user on the [platform name] marketplace",
+                "userRegisteredModalContent": "You should have received an E-Mail from us. In order to activate your user, please confirm your E-Mail address by clicking confirmation link in the E-Mail"
             }
         },
         "notification": {
@@ -472,6 +475,8 @@
                 }
             },
             "registration": {
+                "loginNoInvitationsModalTitle": "Thank you for registering as a user on the [platform name] marketplace",
+                "loginNoInvitationsModalContent": "To unlock all the functionalities of the marketpalce, like trading I-REC's, users also need to register an organization",
                 "registerOrganization": "Register organization",
                 "organizationInformation": "Organization information",
                 "organizationName": "Organization Name",
@@ -490,9 +495,43 @@
                 "signatoryInformation": "Authorized Signatory Information",
                 "signatoryName": "Signatory Full Name",
                 "signatoryAddress": "Signatory Address",
-                "signatoryEmail": "Singatory Email",
+                "signatoryEmail": "Signatory Email",
                 "signatoryTelephone": "Signatory Telephone",
-                "uploadSignatoryId": "Upload Singatory ID"
+                "uploadSignatoryId": "Upload Singatory ID",
+                "titleConnectOrRegisterIREC": "Thank you for registering organization on TK marketplace!",
+                "contentConnectOrRegisterIREC": "We are checking your information as soon as possible and will contact you once everything is approved and you can start trading.<1/> <2/> In order to register devices and request I-RECs, users also need to connect to existing I-REC account.",
+                "titleIRecInfoSuccess": "Thank you for providing your I-REC account information.",
+                "contentIRecInfoSuccess": "We will connect your organization to this account shortly!",
+                "titleConnectIREC": "Requesting I-REC API Access",
+                "platformOrganizationId": "Platform Organization ID",
+                "IRECAPICredentials": "I-REC API Credentials",
+                "IRECUsername": "IREC username",
+                "apiToken": "API token",
+                "clientID": "Client ID",
+                "clientSecret": "Client Secret",
+                
+                "titleRegisterIREC": "I-REC Registration information",
+                "IRECAccountType": "I-REC Account type",
+                "irecParticipantDescription": "Registrant Account for device owner",
+                "irecRegistrantDescription": "Participant Account for traders that also trade outside of marketplace",
+                "orgHeadquatersCompany": "Organization Headquaters Company",
+                "yearOfRegistration": "Year of Registration",
+                "numberOfEmployees": "Number of employees",
+                "shareholderNames": "Shareholder Names (over 10%)",
+                "orgWebsite": "Organization Website",
+                "activeCountries": "Active Countries",
+                "mainBusiness":"Main Business",
+                "ceoName":"Name of the Chief Executive Officer/General Manager",
+                "ceoPassport": "Chief Executive Officer/General Manager passport number",
+                "lastBalance": "Balance sheet total for last financial year",
+                "existingIRECOrg": "Existing IREC organization(s) to become subsidiary",
+                "actions":{
+                    "notNow": "Not now",
+                    "connectIREC": "Connect existing I-REC account",
+                    "registerIREC": "Register new I-REC account",
+                    "connectOrganization": "Connect organization",
+                    "registerOrganization": "Register organization"
+                }
             }
         },
         "bundle": {
