@@ -1,9 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Certificate as CertificateFacade, CertificateUtils } from '@energyweb/issuer';
+import {
+    Certificate as CertificateFacade,
+    CertificateUtils,
+    IOwnershipCommitmentProofWithTx
+} from '@energyweb/issuer';
 import { BigNumber } from 'ethers';
-import { IOwnershipCommitmentProofWithTx } from '@energyweb/origin-backend-core';
 import { IssueCertificateCommand } from '../commands/issue-certificate.command';
 import { Certificate } from '../certificate.entity';
 import { BlockchainPropertiesService } from '../../blockchain/blockchain-properties.service';

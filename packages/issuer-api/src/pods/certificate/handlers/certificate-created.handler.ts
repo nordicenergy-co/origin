@@ -2,12 +2,12 @@ import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import {
     Certificate as CertificateFacade,
     CertificateUtils,
+    IOwnershipCommitmentProof,
     PreciseProofUtils
 } from '@energyweb/issuer';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { IOwnershipCommitmentProof } from '@energyweb/origin-backend-core';
 import { CertificateCreatedEvent } from '../events/certificate-created-event';
 import { BlockchainPropertiesService } from '../../blockchain/blockchain-properties.service';
 import { Certificate } from '../certificate.entity';

@@ -2,15 +2,15 @@ import { Event as BlockchainEvent, ContractTransaction, ethers, BigNumber } from
 
 import { Timestamp } from '@energyweb/utils-general';
 
-import {
-    IOwnershipCommitment,
-    IOwnershipCommitmentProofWithTx
-} from '@energyweb/origin-backend-core';
 import { getEventsFromContract } from '../utils/events';
 import { encodeClaimData, decodeClaimData } from './CertificateUtils';
 import { IBlockchainProperties } from './BlockchainProperties';
 import { MAX_ENERGY_PER_CERTIFICATE } from './CertificationRequest';
-import { PreciseProofUtils } from '../utils/PreciseProofUtils';
+import {
+    IOwnershipCommitment,
+    IOwnershipCommitmentProofWithTx,
+    PreciseProofUtils
+} from '../utils/PreciseProofUtils';
 
 export interface ICertificateEnergy {
     publicVolume: BigNumber;

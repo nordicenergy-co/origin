@@ -10,3 +10,8 @@ export interface IBlockchainProperties {
     issuer: Issuer;
     activeUser?: Signer;
 }
+
+export interface IContractsLookup {
+    registry: string;
+    issuer: string;
+}

@@ -3,8 +3,8 @@ import program from 'commander';
 import fs from 'fs';
 import { Client, ClientConfig } from 'pg';
 import { getProviderWithFallback } from '@energyweb/utils-general';
-
-import { ExternalDeviceIdType, IContractsLookup } from '@energyweb/origin-backend-core';
+import { ExternalDeviceIdType } from '@energyweb/origin-backend-core';
+import { IContractsLookup } from '@energyweb/issuer';
 import { deployContracts } from './deployContracts';
 import { logger } from './Logger';
 

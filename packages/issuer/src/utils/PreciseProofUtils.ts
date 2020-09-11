@@ -1,5 +1,4 @@
 import { PreciseProofs } from 'precise-proofs-js';
-import { IOwnershipCommitmentProof, IOwnershipCommitment } from '@energyweb/origin-backend-core';
 
 export class PreciseProofUtils {
     static generateProofs(
@@ -23,4 +22,19 @@ export class PreciseProofUtils {
             leafs
         };
     }
+}
+
+export interface IOwnershipCommitment {
+    [address: string]: string;
+}
+
+export interface IOwnershipCommitmentProof {
+    commitment: IOwnershipCommitment;
+    rootHash: string;
+    leafs: PreciseProofs.Leaf[];
+    salts: string[];
+}
+
+export interface IOwnershipCommitmentProofWithTx extends IOwnershipCommitmentProof {
+    txHash: string;
 }

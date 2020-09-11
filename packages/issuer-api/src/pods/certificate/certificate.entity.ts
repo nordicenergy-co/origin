@@ -1,8 +1,7 @@
 import { ExtendedBaseEntity } from '@energyweb/origin-backend';
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, Unique } from 'typeorm';
 import { IsBoolean, IsInt } from 'class-validator';
-import { CertificateUtils, IClaim } from '@energyweb/issuer';
-import { IOwnershipCommitmentProof } from '@energyweb/origin-backend-core';
+import { CertificateUtils, IClaim, IOwnershipCommitmentProof } from '@energyweb/issuer';
 import { BlockchainProperties } from '../blockchain/blockchain-properties.entity';
 
 export interface ICertificate {

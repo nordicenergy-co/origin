@@ -1,5 +1,5 @@
 import { Certificate, CertificateUtils, CertificationRequest } from '@energyweb/issuer';
-import { CommitmentStatus, IUser, IOrganization } from '@energyweb/origin-backend-core';
+import { IUser, IOrganization } from '@energyweb/origin-backend-core';
 import { Configuration } from '@energyweb/utils-general';
 import { ContractTransaction } from 'ethers';
 import { getI18n } from 'react-i18next';
@@ -41,7 +41,7 @@ import { ICertificateViewItem } from './types';
 import { enhanceCertificate, fetchDataAfterConfigurationChange } from '../general/sagas';
 
 function assertIsContractTransaction(
-    data: ContractTransaction | CommitmentStatus
+    data: ContractTransaction
 ): asserts data is ContractTransaction {
     if (typeof data === 'number' || !data.hash) {
         throw new Error(`Data.hash is not present`);
@@ -256,7 +256,7 @@ function* requestPublishForSaleSaga(): SagaIterator {
             if (source === CertificateSource.Blockchain) {
                 const certificate: Certificate = yield call(getCertificate, certificateId);
 
-                const transferResult: ContractTransaction | CommitmentStatus = yield call(
+                const transferResult: ContractTransaction = yield call(
                     [certificate, certificate.transfer],
                     account.address,
                     amount
@@ -337,7 +337,7 @@ function* requestDepositSaga(): SagaIterator {
             ]);
             const certificate: Certificate = yield call(getCertificate, certificateId);
 
-            const transferResult: ContractTransaction | CommitmentStatus = yield call(
+            const transferResult: ContractTransaction = yield call(
                 [certificate, certificate.transfer],
                 account.address,
                 amount
