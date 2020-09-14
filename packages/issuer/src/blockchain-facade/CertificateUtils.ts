@@ -47,33 +47,27 @@ export const decodeClaimData = async (
 export async function claimCertificates(
     certificateIds: number[],
     claimData: IClaimData,
-    blockchainProperties: IBlockchainProperties
+    blockchainProperties: IBlockchainProperties,
+    forAddress?: string
 ): Promise<ContractTransaction> {
     const certificatesPromises = certificateIds.map((certId) =>
         new Certificate(certId, blockchainProperties).sync()
     );
     const certificates = await Promise.all(certificatesPromises);
 
-    const ownsAllCertificates = certificates.every((cert) => cert.isOwned === true);
+    const { activeUser, registry } = blockchainProperties;
+    const claimer = forAddress ?? (await activeUser.getAddress());
 
-    if (!ownsAllCertificates) {
-        throw new Error(`You can only claim your own certificates`);
-    }
-
-    const values = certificates.map((cert) => cert.energy.publicVolume);
+    const values = certificates.map((cert) => BigNumber.from(cert.owners[claimer] ?? 0));
 
     const encodedClaimData = await encodeClaimData(claimData, blockchainProperties);
     const data = utils.randomBytes(32);
 
-    const { activeUser, registry } = blockchainProperties;
-
     const registryWithSigner = registry.connect(activeUser);
 
-    const activeUserAddress = await activeUser.getAddress();
-
     const claimTx = await registryWithSigner.safeBatchTransferAndClaimFrom(
-        activeUserAddress,
-        activeUserAddress,
+        claimer,
+        claimer,
         certificateIds,
         values,
         data,
@@ -88,35 +82,29 @@ export async function claimCertificates(
 export async function transferCertificates(
     certificateIds: number[],
     to: string,
-    blockchainProperties: IBlockchainProperties
+    blockchainProperties: IBlockchainProperties,
+    from?: string
 ): Promise<ContractTransaction> {
     const certificatesPromises = certificateIds.map((certId) =>
         new Certificate(certId, blockchainProperties).sync()
     );
-    const certificates = await Promise.all(certificatesPromises);
-
-    const ownsAllCertificates = certificates.every((cert) => cert.isOwned === true);
-
-    if (!ownsAllCertificates) {
-        throw new Error(`You can only claim your own certificates`);
-    }
-
-    const values = certificates.map((cert) => cert.energy.publicVolume);
-
-    // TO-DO: replace with proper data
-    const data = utils.randomBytes(32);
 
     const { registry, activeUser } = blockchainProperties;
     const registryWithSigner = registry.connect(activeUser);
 
     const activeUserAddress = await activeUser.getAddress();
+    const fromAddress = from ?? activeUserAddress;
+
+    const certificates = await Promise.all(certificatesPromises);
+
+    const values = certificates.map((cert) => BigNumber.from(cert.owners[fromAddress] ?? 0));
 
     const transferTx = await registryWithSigner.safeBatchTransferFrom(
-        activeUserAddress,
+        fromAddress,
         to,
         certificateIds,
         values,
-        data
+        utils.randomBytes(32) // TO-DO: replace with proper data
     );
 
     await transferTx.wait();

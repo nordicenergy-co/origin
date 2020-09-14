@@ -5,6 +5,7 @@ import { GetCertificateHandler } from './get-certificate.handler';
 import { ClaimCertificateHandler } from './claim-certificate.handler';
 import { GetCertificateByTokenIdHandler } from './get-certificate-by-token.handler';
 import { CertificateCreatedHandler } from './certificate-created.handler';
+import { BulkClaimCertificatesHandler } from './bulk-claim-certificates.handler';
 
 export const Handlers = [
     GetAllCertificatesHandler,
@@ -13,5 +14,6 @@ export const Handlers = [
     GetCertificateHandler,
     ClaimCertificateHandler,
     GetCertificateByTokenIdHandler,
-    CertificateCreatedHandler
+    CertificateCreatedHandler,
+    BulkClaimCertificatesHandler
 ];

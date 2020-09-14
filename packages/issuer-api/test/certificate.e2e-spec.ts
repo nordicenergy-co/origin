@@ -8,6 +8,8 @@ import { IClaimData, IClaim } from '@energyweb/issuer';
 import { DatabaseService } from './database.service';
 import { bootstrapTestInstance, deviceManager, registryDeployer } from './issuer-api';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const certificateTestData = {
     to: deviceManager.address,
     deviceId: 'ABC-123',
@@ -129,6 +131,84 @@ describe('Certificate tests', () => {
 
         await request(app.getHttpServer())
             .get(`/certificate/${certificateId}`)
+            .expect(200)
+            .expect((getResponse) => {
+                const { claimers, claims, owners } = getResponse.body;
+
+                expect(owners[deviceManager.address]).to.equal('0');
+                expect(claimers[deviceManager.address]).to.equal(value);
+                expect(
+                    claims.some(
+                        (claim: IClaim) =>
+                            claim.to === deviceManager.address &&
+                            claim.from === deviceManager.address &&
+                            JSON.stringify(claim.claimData) === JSON.stringify(claimData) &&
+                            claim.value === parseInt(value, 10)
+                    )
+                ).to.be.true;
+            });
+    });
+
+    it('should bulk claim certificates', async () => {
+        const value = '1000000';
+        const claimData: IClaimData = {
+            beneficiary: 'Testing beneficiary 1234',
+            address: 'Random address 123, Somewhere',
+            region: 'Northernmost Region',
+            zipCode: '321-45',
+            countryCode: 'DE'
+        };
+
+        let certificateId1: number;
+        let certificateId2: number;
+
+        await request(app.getHttpServer())
+            .post('/certificate')
+            .send(certificateTestData)
+            .expect(201)
+            .expect((res) => {
+                certificateId1 = res.body.id;
+            });
+
+        await request(app.getHttpServer())
+            .post('/certificate')
+            .send(certificateTestData)
+            .expect(201)
+            .expect((res) => {
+                certificateId2 = res.body.id;
+            });
+
+        await request(app.getHttpServer())
+            .put(`/certificate/bulk-claim`)
+            .send({ claimData, certificateIds: [certificateId1, certificateId2] })
+            .expect(200)
+            .expect((claimResponse) => {
+                expect(claimResponse.body.success).to.be.true;
+            });
+
+        await sleep(2000);
+
+        await request(app.getHttpServer())
+            .get(`/certificate/${certificateId1}`)
+            .expect(200)
+            .expect((getResponse) => {
+                const { claimers, claims, owners } = getResponse.body;
+
+                expect(owners[deviceManager.address]).to.equal('0');
+                expect(claimers[deviceManager.address]).to.equal(value);
+                expect(
+                    claims.some(
+                        (claim: IClaim) =>
+                            claim.to === deviceManager.address &&
+                            claim.from === deviceManager.address &&
+                            JSON.stringify(claim.claimData) === JSON.stringify(claimData) &&
+                            claim.value === parseInt(value, 10)
+                    )
+                ).to.be.true;
+            });
+
+        await request(app.getHttpServer())
+            .get(`/certificate/${certificateId2}`)
             .expect(200)
             .expect((getResponse) => {
                 const { claimers, claims, owners } = getResponse.body;

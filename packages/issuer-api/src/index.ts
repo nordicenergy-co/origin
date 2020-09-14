@@ -11,3 +11,5 @@ export { AppModule, providers } from './app.module';
 export const entities = [Certificate, CertificationRequest, BlockchainProperties];
 
 export const modules = [CertificateModule, CertificationRequestModule, BlockchainPropertiesModule];
+
+export * from './client';

@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Certificate as CertificateFacade, CertificateUtils } from '@energyweb/issuer';
+import { Certificate as CertificateFacade } from '@energyweb/issuer';
 import { BigNumber, Event as BlockchainEvent } from 'ethers';
 import { ISuccessResponse } from '@energyweb/origin-backend-core';
 import { BadRequestException } from '@nestjs/common';
@@ -24,7 +24,7 @@ export class ClaimCertificateHandler implements ICommandHandler<ClaimCertificate
             { relations: ['blockchain'] }
         );
 
-        const cert = await new CertificateFacade(
+        let cert = await new CertificateFacade(
             certificate.tokenId,
             certificate.blockchain.wrap()
         ).sync();
@@ -95,22 +95,12 @@ export class ClaimCertificateHandler implements ICommandHandler<ClaimCertificate
             };
         }
 
-        const updatedOwners = await CertificateUtils.calculateOwnership(
-            certificate.tokenId,
-            certificate.blockchain.wrap()
-        );
-
-        const updatedClaimers = await CertificateUtils.calculateClaims(
-            certificate.tokenId,
-            certificate.blockchain.wrap()
-        );
-
-        const claims = await cert.getClaimedData();
+        cert = await cert.sync();
 
         await this.repository.update(certificateId, {
-            owners: updatedOwners,
-            claimers: updatedClaimers,
-            claims
+            owners: cert.owners,
+            claimers: cert.claimers,
+            claims: await cert.getClaimedData()
         });
 
         return {

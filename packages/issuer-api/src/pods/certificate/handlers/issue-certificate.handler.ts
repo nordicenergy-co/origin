@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
     Certificate as CertificateFacade,
-    CertificateUtils,
     IOwnershipCommitmentProofWithTx
 } from '@energyweb/issuer';
 import { BigNumber } from 'ethers';
@@ -47,11 +46,6 @@ export class IssueCertificateHandler implements ICommandHandler<IssueCertificate
             ));
         }
 
-        const certificateOwners = await CertificateUtils.calculateOwnership(
-            cert.id,
-            blockchainProperties.wrap()
-        );
-
         const certificate = this.repository.create({
             blockchain: blockchainProperties,
             tokenId: cert.id,
@@ -60,7 +54,7 @@ export class IssueCertificateHandler implements ICommandHandler<IssueCertificate
             generationEndTime: cert.generationEndTime,
             creationTime: cert.creationTime,
             creationBlockHash: cert.creationBlockHash,
-            owners: certificateOwners,
+            owners: cert.owners,
             issuedPrivately: isPrivate ?? false,
             latestCommitment: isPrivate ? commitment : null
         });

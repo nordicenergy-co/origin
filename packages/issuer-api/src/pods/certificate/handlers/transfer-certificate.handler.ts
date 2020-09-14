@@ -1,11 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-    Certificate as CertificateFacade,
-    CertificateUtils,
-    PreciseProofUtils
-} from '@energyweb/issuer';
+import { Certificate as CertificateFacade, PreciseProofUtils } from '@energyweb/issuer';
 import { BigNumber } from 'ethers';
 import { ISuccessResponse } from '@energyweb/origin-backend-core';
 import { BadRequestException } from '@nestjs/common';
@@ -27,7 +23,7 @@ export class TransferCertificateHandler implements ICommandHandler<TransferCerti
             { relations: ['blockchain'] }
         );
 
-        const onChainCert = await new CertificateFacade(
+        let onChainCert = await new CertificateFacade(
             certificate.tokenId,
             certificate.blockchain.wrap()
         ).sync();
@@ -70,13 +66,10 @@ export class TransferCertificateHandler implements ICommandHandler<TransferCerti
                 };
             }
 
-            const newOwners = await CertificateUtils.calculateOwnership(
-                certificate.tokenId,
-                certificate.blockchain.wrap()
-            );
+            onChainCert = await onChainCert.sync();
 
             await this.repository.update(certificateId, {
-                owners: newOwners
+                owners: onChainCert.owners
             });
         }
 

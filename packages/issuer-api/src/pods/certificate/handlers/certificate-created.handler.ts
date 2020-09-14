@@ -1,7 +1,6 @@
 import { IEventHandler, EventsHandler } from '@nestjs/cqrs';
 import {
     Certificate as CertificateFacade,
-    CertificateUtils,
     IOwnershipCommitmentProof,
     PreciseProofUtils
 } from '@energyweb/issuer';
@@ -27,11 +26,6 @@ export class CertificateCreatedHandler implements IEventHandler<CertificateCreat
 
         const cert = await new CertificateFacade(certificateId, blockchainProperties.wrap()).sync();
 
-        const certificateOwners = await CertificateUtils.calculateOwnership(
-            certificateId,
-            blockchainProperties.wrap()
-        );
-
         let latestCommitment: IOwnershipCommitmentProof;
 
         if (privateInfo) {
@@ -48,7 +42,7 @@ export class CertificateCreatedHandler implements IEventHandler<CertificateCreat
             generationEndTime: cert.generationEndTime,
             creationTime: cert.creationTime,
             creationBlockHash: cert.creationBlockHash,
-            owners: certificateOwners,
+            owners: cert.owners,
             issuedPrivately: !!privateInfo,
             latestCommitment
         });

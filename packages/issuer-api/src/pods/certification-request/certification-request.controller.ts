@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Role, ISuccessResponse } from '@energyweb/origin-backend-core';
 
+import { ApiTags } from '@nestjs/swagger';
 import { CreateCertificationRequestCommand } from './commands/create-certification-request.command';
 import { ICreateCertificationRequestDTO } from './commands/create-certification-request.dto';
 import { CertificationRequest } from './certification-request.entity';
@@ -22,6 +23,7 @@ import { GetCertificationRequestQuery } from './queries/get-certification-reques
 import { ApproveCertificationRequestCommand } from './commands/approve-certification-request.command';
 import { RevokeCertificationRequestCommand } from './commands/revoke-certification-request.command';
 
+@ApiTags('certification-requests')
 @Controller('certification-request')
 export class CertificationRequestController {
     private readonly logger = new Logger(CertificationRequestController.name);

@@ -3,7 +3,13 @@ import { Event as BlockchainEvent, ContractTransaction, ethers, BigNumber } from
 import { Timestamp } from '@energyweb/utils-general';
 
 import { getEventsFromContract } from '../utils/events';
-import { encodeClaimData, decodeClaimData } from './CertificateUtils';
+import {
+    encodeClaimData,
+    decodeClaimData,
+    IShareInCertificate,
+    calculateOwnership,
+    calculateClaims
+} from './CertificateUtils';
 import { IBlockchainProperties } from './BlockchainProperties';
 import { MAX_ENERGY_PER_CERTIFICATE } from './CertificationRequest';
 import {
@@ -11,11 +17,6 @@ import {
     IOwnershipCommitmentProofWithTx,
     PreciseProofUtils
 } from '../utils/PreciseProofUtils';
-
-export interface ICertificateEnergy {
-    publicVolume: BigNumber;
-    claimedVolume: BigNumber;
-}
 
 export interface IClaimData {
     beneficiary?: string;
@@ -38,22 +39,17 @@ export interface ICertificate {
     id: number;
     issuer: string;
     deviceId: string;
-    energy: ICertificateEnergy;
     generationStartTime: number;
     generationEndTime: number;
     certificationRequestId: number;
     creationTime: number;
     creationBlockHash: string;
-
-    isClaimed: boolean;
-    isOwned: boolean;
-    claims: IClaim[];
+    owners: IShareInCertificate;
+    claimers: IShareInCertificate;
 }
 
 export class Certificate implements ICertificate {
     public deviceId: string;
-
-    public energy: ICertificateEnergy;
 
     public generationStartTime: number;
 
@@ -71,7 +67,9 @@ export class Certificate implements ICertificate {
 
     public data: string;
 
-    public claims: IClaim[];
+    public owners: IShareInCertificate;
+
+    public claimers: IShareInCertificate;
 
     constructor(public id: number, public blockchainProperties: IBlockchainProperties) {}
 
@@ -169,8 +167,6 @@ export class Certificate implements ICertificate {
 
         this.data = certOnChain.data;
 
-        this.claims = await this.getClaimedData();
-
         const { issuer } = this.blockchainProperties;
 
         const decodedData = await issuer.decodeData(this.data);
@@ -198,36 +194,12 @@ export class Certificate implements ICertificate {
 
         this.certificationRequestId = certificationRequestApprovedEvents[0]._id;
 
-        const owner = await this.blockchainProperties.activeUser.getAddress();
-        const ownedEnergy = await registry.balanceOf(owner, this.id);
-        const claimedEnergy = await registry.claimedBalanceOf(owner, this.id);
-
-        this.energy = {
-            publicVolume: ownedEnergy,
-            claimedVolume: claimedEnergy
-        };
+        this.owners = await calculateOwnership(this.id, this.blockchainProperties);
+        this.claimers = await calculateClaims(this.id, this.blockchainProperties);
 
         this.initialized = true;
 
         return this;
-    }
-
-    get isOwned(): boolean {
-        if (!this.energy) {
-            return false;
-        }
-
-        return this.energy.publicVolume.gt(0);
-    }
-
-    get isClaimed(): boolean {
-        if (!this.energy) {
-            return false;
-        }
-
-        const { claimedVolume } = this.energy;
-
-        return claimedVolume.gt(0);
     }
 
     async claim(
@@ -236,26 +208,25 @@ export class Certificate implements ICertificate {
         from?: string,
         to?: string
     ): Promise<ContractTransaction> {
-        const { publicVolume } = this.energy;
-
-        if (publicVolume.eq(0) && !amount) {
-            throw new Error(
-                `claim(): You do not own a share in the certificate. If you're an operator, please define an amount.`
-            );
-        }
-
         const { activeUser, registry } = this.blockchainProperties;
         const registryWithSigner = registry.connect(activeUser);
 
         const activeUserAddress = await activeUser.getAddress();
 
+        const claimAddress = to ?? activeUserAddress;
+        const ownedVolume = BigNumber.from(this.owners[claimAddress] ?? 0);
+
+        if (ownedVolume.eq(0) && !amount) {
+            throw new Error(`claim(): ${claimAddress} does not own a share in the certificate.`);
+        }
+
         const encodedClaimData = await encodeClaimData(claimData, this.blockchainProperties);
 
         const claimTx = await registryWithSigner.safeTransferAndClaimFrom(
             from ?? activeUserAddress,
-            to ?? activeUserAddress,
+            claimAddress,
             this.id,
-            amount || publicVolume,
+            amount ?? ownedVolume,
             this.data,
             encodedClaimData
         );
@@ -270,22 +241,19 @@ export class Certificate implements ICertificate {
             throw new Error(`Unable to transfer Certificate #${this.id}. It has been revoked.`);
         }
 
-        const { activeUser } = this.blockchainProperties;
+        const { activeUser, registry } = this.blockchainProperties;
         const fromAddress = from ?? (await activeUser.getAddress());
         const toAddress = ethers.utils.getAddress(to);
 
-        const { publicVolume } = this.energy;
+        const ownedVolume = BigNumber.from(this.owners[toAddress] ?? 0);
 
-        const amountToTransfer = amount ?? publicVolume;
-
-        const { registry } = this.blockchainProperties;
         const registryWithSigner = registry.connect(activeUser);
 
         const tx = await registryWithSigner.safeTransferFrom(
             fromAddress,
             toAddress,
             this.id,
-            amountToTransfer,
+            amount ?? ownedVolume,
             this.data
         );
 

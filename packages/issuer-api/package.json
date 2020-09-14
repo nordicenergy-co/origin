@@ -17,8 +17,9 @@
         "issuer-api-migrate": "./bin/issuer-api-migrate"
     },
     "scripts": {
-        "build": "yarn build:ts",
+        "build": "yarn build:ts && yarn build:client",
         "build:ts": "tsc -b tsconfig.json && nest build -p tsconfig.json --tsc",
+        "build:client": "yarn client:generate:schema && yarn client:generate && yarn client:clean",
         "prettier": "prettier --write --config-precedence file-override './src/**/*'",
         "lint": "eslint \"src/**/*{.ts,.tsx}\" \"test/**/*{.ts,.tsx}\"",
         "lint-fix": "eslint \"src/**/*{.ts,.tsx}\" \"test/**/*{.ts,.tsx}\" --fix",
@@ -35,7 +36,10 @@
         "typeorm:run": "yarn typeorm migration:run",
         "typeorm:drop": "yarn typeorm schema:drop",
         "typeorm:dropAndMigrate": "yarn typeorm:drop && yarn typeorm:run",
-        "precommit": "lint-staged"
+        "precommit": "lint-staged",
+        "client:generate": "openapi-generator generate -g typescript-axios -i client/schema.yaml -o src/client",
+        "client:generate:schema": "ts-node client/generateSchema.ts",
+        "client:clean": "find src/client/ -type f  ! -name \"*.ts\"  -delete"
     },
     "dependencies": {
         "@energyweb/issuer": "2.4.5",
@@ -43,7 +47,7 @@
         "@energyweb/origin-backend-core": "5.0.1",
         "@energyweb/origin-backend-utils": "1.2.2",
         "@energyweb/utils-general": "^9.2.2",
-        "@nestjs/common": "7.4.2",
+        "@nestjs/common": "7.4.4",
         "@nestjs/config": "0.5.0",
         "@nestjs/core": "7.4.2",
         "@nestjs/cqrs": "7.0.1",
@@ -63,6 +67,7 @@
         "precise-proofs-js": "^1.2.0",
         "reflect-metadata": "0.1.13",
         "rxjs": "6.6.2",
+        "swagger-typescript-codegen": "^3.2.0",
         "swagger-ui-express": "4.1.4",
         "typeorm": "0.2.25"
     },
@@ -70,12 +75,14 @@
         "@nestjs/cli": "7.5.1",
         "@nestjs/schematics": "7.1.1",
         "@nestjs/testing": "7.4.2",
+        "@openapitools/openapi-generator-cli": "^1.0.18-4.3.1",
         "@types/express": "4.17.4",
         "@types/jest": "25.2.3",
         "@types/node": "12.12.54",
         "@types/supertest": "2.0.10",
         "eslint-plugin-jest": "23.20.0",
         "jest": "26.4.2",
+        "json-to-pretty-yaml": "^1.2.2",
         "polly-js": "1.6.7",
         "prettier": "2.0.5",
         "supertest": "4.0.2",
