@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Role, ISuccessResponse } from '@energyweb/origin-backend-core';
 
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateCertificationRequestCommand } from './commands/create-certification-request.command';
 import { ICreateCertificationRequestDTO } from './commands/create-certification-request.dto';
 import { CertificationRequest } from './certification-request.entity';
@@ -32,18 +32,34 @@ export class CertificationRequestController {
 
     @Get('/:id')
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({
+        status: 200,
+        type: CertificationRequest,
+        description: 'Returns a Certification Request'
+    })
     public async get(@Param('id', new ParseIntPipe()) id: number): Promise<CertificationRequest> {
         return this.queryBus.execute(new GetCertificationRequestQuery(id));
     }
 
     @Get()
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({
+        status: 200,
+        type: [CertificationRequest],
+        description: 'Returns all Certification Requests'
+    })
     public async getAll(): Promise<CertificationRequest[]> {
         return this.queryBus.execute(new GetAllCertificationRequestsQuery());
     }
 
     @Post()
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({
+        status: 200,
+        type: CertificationRequest,
+        description: 'Creates a Certification Request'
+    })
+    @ApiBody({ type: ICreateCertificationRequestDTO })
     public async create(
         @Body() dto: ICreateCertificationRequestDTO
     ): Promise<CertificationRequest> {

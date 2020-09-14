@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ISuccessResponse, ILoggedInUser } from '@energyweb/origin-backend-core';
 
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IssueCertificateCommand } from './commands/issue-certificate.command';
 import { IssueCertificateDTO } from './commands/issue-certificate.dto';
 import { Certificate } from './certificate.entity';
@@ -26,6 +26,7 @@ import { ClaimCertificateDTO } from './commands/claim-certificate.dto';
 import { ClaimCertificateCommand } from './commands/claim-certificate.command';
 import { GetCertificateByTokenIdQuery } from './queries/get-certificate-by-token.query';
 import { BulkClaimCertificatesCommand } from './commands/bulk-claim-certificates.command';
+import { BulkClaimCertificatesDTO } from './commands/bulk-claim-certificates.dto';
 
 @ApiTags('certificates')
 @Controller('certificate')
@@ -36,12 +37,18 @@ export class CertificateController {
 
     @Get('/:id')
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({ status: 200, type: Certificate, description: 'Returns a Certificate' })
     public async get(@Param('id', new ParseIntPipe()) id: number): Promise<Certificate> {
         return this.queryBus.execute(new GetCertificateQuery(id));
     }
 
     @Get('/token-id/:tokenId')
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({
+        status: 200,
+        type: Certificate,
+        description: 'Returns a Certificate by token ID'
+    })
     public async getByTokenId(
         @Param('tokenId', new ParseIntPipe()) tokenId: number
     ): Promise<Certificate> {
@@ -50,12 +57,23 @@ export class CertificateController {
 
     @Get()
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({
+        status: 200,
+        type: [Certificate],
+        description: 'Returns all Certificates'
+    })
     public async getAll(): Promise<Certificate[]> {
         return this.queryBus.execute(new GetAllCertificatesQuery());
     }
 
     @Post()
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiResponse({
+        status: 201,
+        type: Certificate,
+        description: 'Returns the issued Certificate'
+    })
+    @ApiBody({ type: IssueCertificateDTO })
     public async issue(@Body() dto: IssueCertificateDTO): Promise<Certificate> {
         return this.commandBus.execute(
             new IssueCertificateCommand(
@@ -71,6 +89,7 @@ export class CertificateController {
 
     @Put('/:id/transfer')
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiBody({ type: TransferCertificateDTO })
     public async transfer(
         @UserDecorator() { blockchainAccountAddress }: ILoggedInUser,
         @Param('id', new ParseIntPipe()) certificateId: number,
@@ -88,6 +107,7 @@ export class CertificateController {
 
     @Put('/:id/claim')
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiBody({ type: ClaimCertificateDTO })
     public async claim(
         @UserDecorator() { blockchainAccountAddress }: ILoggedInUser,
         @Param('id', new ParseIntPipe()) certificateId: number,
@@ -105,9 +125,10 @@ export class CertificateController {
 
     @Put('/bulk-claim')
     @UseGuards(AuthGuard(), ActiveUserGuard)
+    @ApiBody({ type: BulkClaimCertificatesDTO })
     public async bulkClaim(
         @UserDecorator() { blockchainAccountAddress }: ILoggedInUser,
-        @Body() dto: ClaimCertificateDTO
+        @Body() dto: BulkClaimCertificatesDTO
     ): Promise<ISuccessResponse> {
         return this.commandBus.execute(
             new BulkClaimCertificatesCommand(
