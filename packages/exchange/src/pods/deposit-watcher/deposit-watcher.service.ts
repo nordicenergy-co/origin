@@ -1,6 +1,7 @@
 import { getProviderWithFallback } from '@energyweb/utils-general';
 import { Contracts } from '@energyweb/issuer';
-import { ConfigurationService, DeviceService } from '@energyweb/origin-backend';
+import { BlockchainPropertiesService } from '@energyweb/issuer-api';
+import { DeviceService } from '@energyweb/origin-backend';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
@@ -46,7 +47,7 @@ export class DepositWatcherService implements OnModuleInit {
     public async onModuleInit() {
         this.logger.debug('onModuleInit');
 
-        const originBackendConfigurationService = this.moduleRef.get(ConfigurationService, {
+        const blockchainConfigurationService = this.moduleRef.get(BlockchainPropertiesService, {
             strict: false
         });
 
@@ -54,9 +55,7 @@ export class DepositWatcherService implements OnModuleInit {
             strict: false
         });
 
-        const {
-            contractsLookup: { registry, issuer }
-        } = await originBackendConfigurationService.get();
+        const { registry, issuer } = await blockchainConfigurationService.get();
 
         this.tokenInterface = new ethers.utils.Interface(Contracts.RegistryJSON.abi);
 

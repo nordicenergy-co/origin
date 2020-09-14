@@ -1,5 +1,5 @@
 import { Contracts } from '@energyweb/issuer';
-import { ConfigurationService } from '@energyweb/origin-backend';
+import { BlockchainPropertiesService } from '@energyweb/issuer-api';
 import { getProviderWithFallback } from '@energyweb/utils-general';
 import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -46,13 +46,11 @@ export class WithdrawalProcessorService implements OnModuleInit {
 
         this.wallet = new Wallet(wallet, provider);
 
-        const originBackendConfigurationService = this.moduleRef.get(ConfigurationService, {
+        const blockchainConfigurationService = this.moduleRef.get(BlockchainPropertiesService, {
             strict: false
         });
 
-        const {
-            contractsLookup: { registry }
-        } = await originBackendConfigurationService.get();
+        const { registry } = await blockchainConfigurationService.get();
 
         const { abi } = Contracts.RegistryJSON;
 
