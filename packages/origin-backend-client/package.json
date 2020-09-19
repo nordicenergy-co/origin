@@ -24,7 +24,7 @@
         "@energyweb/utils-general": "9.2.3",
         "axios": "0.20.0",
         "ethers": "5.0.8",
-        "moment": "2.24.0"
+        "moment": "2.28.0"
     },
     "files": [
         "dist"
